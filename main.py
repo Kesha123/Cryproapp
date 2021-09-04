@@ -1,10 +1,25 @@
 import asyncio
 import websockets
-
 import requests
-#from websocket import create_connection
 import json
 import datetime
+import matplotlib.pyplot as plt
+
+
+fig = plt.figure()
+ax = fig.add_subplot(111)
+fig.show()
+
+xdata = []
+ydata = []
+
+
+def update_graph():
+    ax.plot(xdata, ydata, color='g')
+    ax.legend([f"Last price: {ydata[-1]}$"])
+
+    fig.canvas.draw()
+    plt.pause(0.1)
 
 
 def get_pairs():
@@ -30,12 +45,20 @@ async def main(websocket = create_user()):
             "privateChannel": "false",
             "response": "true"
         })
+
+        await connection.send(data)
         result = await connection.recv()
         result = await connection.recv()
 
         while True:
             data = json.loads(await connection.recv()).get('data')
-            yield data.get('price'), datetime.datetime.fromtimestamp(int(data.get('time')) // 1000)
+
+            time = datetime.datetime.fromtimestamp(int(data.get('time')) // 1000)
+            prce = data.get('price')
+            xdata.append(time)
+            ydata.append(prce)
+
+            update_graph()
 
 
 if __name__ == '__main__':
