@@ -1,4 +1,6 @@
 import asyncio
+import random
+
 import websockets
 import requests
 import json
@@ -12,20 +14,25 @@ fig.show()
 
 xdata = []
 ydata = []
-
-
-def update_graph():
-    ax.plot(xdata, ydata, color='g')
-    ax.legend([f"Last price: {ydata[-1]}$"])
-
-    fig.canvas.draw()
-    plt.pause(0.1)
+last_price = '0'
 
 
 def get_pairs():
     pairs = requests.get("https://api.kucoin.com/api/v1/symbols").json().get('data')
     for i in pairs:
         yield i.get('symbol')
+
+
+pair = random.sample(list(get_pairs()), 1)[0]
+coin_usd = f"{pair.split('-')[0]}-USDT"
+
+
+def update_graph():
+    ax.plot(xdata, ydata, color='g')
+    ax.legend([f"Last price: {ydata[-1]}$", pair])
+
+    fig.canvas.draw()
+    plt.pause(0.00001)
 
 
 def create_user():
@@ -41,7 +48,7 @@ async def main(websocket = create_user()):
         data = json.dumps({
             "id": "12345",
             "type": "subscribe",
-            "topic": f"/market/ticker:BTC-USDT",
+            "topic": f"/market/ticker:{pair}",
             "privateChannel": "false",
             "response": "true"
         })
@@ -54,9 +61,9 @@ async def main(websocket = create_user()):
             data = json.loads(await connection.recv()).get('data')
 
             time = datetime.datetime.fromtimestamp(int(data.get('time')) // 1000)
-            prce = data.get('price')
+            price = data.get('price')
             xdata.append(time)
-            ydata.append(prce)
+            ydata.append(price)
 
             update_graph()
 
