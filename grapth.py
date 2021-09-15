@@ -31,6 +31,9 @@ class Pair:
         self.ydata = []
 
     def update_graph(self):
+        if len(self.ydata) == 101:
+            del self.ydata[0]
+            del self.xdata[0]
 
         self.ax.plot(self.xdata, self.ydata, color='g')
         self.ax.legend([f"Last price: {self.ydata[-1]}$", self.name])
@@ -39,8 +42,7 @@ class Pair:
         plt.pause(0.00001)
 
     async def main(self, websocket=create_user()):
-        print(self.name)
-        async with websockets.connect(websocket) as connection:
+        async with websockets.connect(websocket, ping_interval=None) as connection:
             data = json.dumps({
                 "id": "12345",
                 "type": "subscribe",
@@ -60,18 +62,20 @@ class Pair:
                 price = data.get('price')
                 self.xdata.append(time)
                 self.ydata.append(price)
-
                 self.update_graph()
 
 
-async def graphs():
-    pairs = [i for i in get_pairs()][0:2]
-    pairs = [Pair(name=i) for i in pairs]
+def main():
+    async def graphs():
+        pairs = ["BTC-USDT"]
+        pairs = [Pair(name=i) for i in pairs]
+        for i in pairs:
+            loop.create_task(i.main())
 
-    for i in pairs:
-        loop.create_task(i.main())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(graphs())
+    loop.run_forever()
 
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(graphs())
-loop.run_forever()
+if __name__ == '__main__':
+    main()
