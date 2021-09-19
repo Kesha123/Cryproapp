@@ -20,10 +20,11 @@ def get_pairs():
 
 
 class Pair:
-    def __init__(self,name):
+    def __init__(self, name):
         self.name = name
         self.xdata = []
         self.ydata = []
+        self.data = []
         self.json_data = open(f'{self.name}.json', 'w')
 
     def json_load(self):
@@ -32,7 +33,7 @@ class Pair:
             del self.xdata[0]
 
         with open(f'{self.name}.json', 'w') as file:
-            data = dict(zip(self.xdata, self.ydata))
+            data = dict(data=self.data)
             json.dump(data, file)
 
     async def main(self, websocket=create_user()):
@@ -56,23 +57,22 @@ class Pair:
                 price = data.get('price')
 
                 if (time not in self.xdata) and (price not in self.ydata):
+                    coin_second_data = (time, price)
+                    self.data.append(coin_second_data)
                     self.xdata.append(time)
-                    self.ydata.append(price)
+                    self.ydata.append(float(price))
 
                 self.json_load()
 
 
-def main():
+def start(pair):
     async def graphs():
-        pairs = ["BTC-USDT"]
-        pairs = [Pair(name=i) for i in pairs]
-        for i in pairs:
-            loop.create_task(i.main())
+        loop.create_task(pair.main())
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(graphs())
     loop.run_forever()
 
 
-if __name__ == '__main__':
-    main()
+
+
