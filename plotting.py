@@ -26,7 +26,6 @@ class GRAPH(GridLayout):
         Coin = Pair(name=self.name)
         coin_start = threading.Thread(target=start, args=(Coin,))
         coin_start.start()
-        print(1)
 
     async def update_graph(self):
         while True:

@@ -25,14 +25,14 @@ class GRAPHlayout(GridLayout):
             for coin in self.coins:
                 loop.create_task(coin.update_graph())
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
         loop.run_until_complete(tasks())
         loop.run_forever()
 
 
 class MyApp(App):
     def build(self):
-        return GRAPHlayout()
+        return GRAPHlayout().run()
 
 
 if __name__ == '__main__':
