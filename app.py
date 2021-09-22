@@ -1,33 +1,50 @@
+import threading
+
 from kivy.app import App
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+
 from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
 from plotting import GRAPH
 from Pairs import get_pairs
-import asyncio
+from Pairs import Pair, start
 
 
 class GRAPHlayout(GridLayout):
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
-        #self.coins = [GRAPH(coin=coin) for coin in get_pairs()]
-        self.coins = [GRAPH(coin="ETH-USDT"), GRAPH(coin="BTC-USDT"),]
-        layout = GridLayout(cols=1)
 
-        for i in self.coins:
-            layout.add_widget(i)
+        CoinList = [i for i in get_pairs()]
+        self.main_layout = GridLayout(cols=1, spacing=0, size_hint_y=None)
+        self.main_layout.bind(minimum_height=self.main_layout.setter('height'))
 
-        root = ScrollView(size_hint=(1, None), size=(Window.width, Window.height))
-        root.add_widget(layout)
+        for btn in CoinList:
+            CoinButton = Button(text=f"{btn}", size_hint_y=None, height=40, on_press=lambda btn: self.open_graph(btn))
+            self.main_layout.add_widget(CoinButton)
+
+        self.scroll = ScrollView(size_hint=(1, None), size=(Window.width, Window.height))
+        self.scroll.add_widget(self.main_layout)
+
+    def open_graph(self, coin):
+
+        Coin = Pair(name=coin.text)
+        coin_start = threading.Thread(target=start, args=(Coin,))
+        coin_start.start()
+
+        grapth = GRAPH(coin=coin.text)
+        self.main_layout.clear_widgets()
+        self.scroll.clear_widgets()
+
+        self.GraphCoin = GridLayout(rows=1, cols=1)
+        self.GraphCoin.add_widget(grapth.layout)
+        self.scroll.add_widget(self.GraphCoin)
+
+        return self.scroll
 
     def run(self):
-        async def tasks():
-            for coin in self.coins:
-                loop.create_task(coin.update_graph())
-
-        loop = asyncio.new_event_loop()
-        loop.run_until_complete(tasks())
-        loop.run_forever()
+        return self.scroll
 
 
 class MyApp(App):

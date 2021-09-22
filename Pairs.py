@@ -69,9 +69,12 @@ def start(pair):
     async def graphs():
         loop.create_task(pair.main())
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     loop.run_until_complete(graphs())
     loop.run_forever()
+
+
 
 
 
