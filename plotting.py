@@ -20,10 +20,11 @@ class GRAPH(GridLayout):
 
         self.info = Label(text='')
 
-        #self.BackButton = Button(text="Back", on_press=)
+        self.BackButton = Button(text="Back", on_press=lambda x: self.stop_plotting(key='btn'))
+        self.stop = False
 
         self.layout = GridLayout(cols=1, rows=3)
-        #self.layout.add_widget(self.BackButton)
+        self.layout.add_widget(self.BackButton)
         self.layout.add_widget(self.info)
         self.layout.add_widget(self.graph)
 
@@ -39,6 +40,10 @@ class GRAPH(GridLayout):
                 self.info.text = f"{data[0][-1]} \nlast price: {data[-1][1]}$"
 
                 time.sleep(1)
+
+    def stop_plotting(self, key):
+        if key == 'btn':
+            self.stop = True
 
     def run(self):
         return self.layout

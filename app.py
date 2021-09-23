@@ -11,8 +11,21 @@ from Pairs import get_pairs
 from Pairs import Pair, start
 
 
+class StopableThread(threading.Thread):
+
+    def __init__(self, *args, **kwargs):
+        super(StopableThread, self).__init__(*args, **kwargs)
+        self._stop = threading.Event()
+
+    def stop(self):
+        self._stop.set()
+
+    def stopped(self):
+        return self._stop.isSet()
+
+
 class GRAPHlayout(GridLayout):
-    def __init__(self,**kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         CoinList = [i for i in get_pairs()]
@@ -29,24 +42,34 @@ class GRAPHlayout(GridLayout):
     def open_graph(self, coin):
 
         self.Coin = Pair(name=coin.text)
-        self.coin_start = threading.Thread(target=start, args=(self.Coin,))
+        self.coin_start = StopableThread(target=start, args=(self.Coin,))
         self.coin_start.start()
 
-        grapth = GRAPH(coin=coin.text)
-        self.main_layout.clear_widgets()
+        self.graph = GRAPH(coin=coin.text)
         self.scroll.clear_widgets()
 
         self.GraphCoin = GridLayout(rows=1, cols=1)
-        self.GraphCoin.add_widget(grapth.layout)
+        self.GraphCoin.add_widget(self.graph.layout)
         self.scroll.add_widget(self.GraphCoin)
-        update_start = threading.Thread(target=grapth.update_graph, args=(self.Coin.data, ))
-        update_start.start()
+
+        self.update_start = StopableThread(target=self.graph.update_graph, args=(self.Coin.data,))
+        self.update_start.start()
+
+        self.is_stopped = StopableThread(target=self.close_graph)
+        self.is_stopped.start()
 
         return self.scroll
 
     def close_graph(self):
-        self.coin_start.ex
+        while True:
+            if self.graph.stop:
+                self.coin_start.stop()
+                self.update_start.stop()
+                self.is_stopped.stop()
 
+                self.scroll.clear_widgets()
+                self.scroll.add_widget(self.main_layout)
+                return self.scroll
 
     def run(self):
         return self.scroll
