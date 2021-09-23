@@ -23,19 +23,10 @@ def get_pairs():
 class Pair:
     def __init__(self, name):
         self.name = name
+        self.data = []
         self.xdata = []
         self.ydata = []
-        self.data = []
-        self.json_data = open(f'{self.name}.json', 'w')
-
-    def json_load(self):
-        if len(self.ydata) == 101:
-            del self.ydata[0]
-            del self.xdata[0]
-
-        with open(f'{self.name}.json', 'w') as file:
-            data = dict(data=self.data)
-            json.dump(data, file)
+        self.full_time = ''
 
     async def main(self, websocket=create_user()):
         async with websockets.connect(websocket, ping_interval=None) as connection:
@@ -54,17 +45,18 @@ class Pair:
             while True:
                 data = json.loads(await connection.recv()).get('data')
 
-                time = datetime.datetime.fromtimestamp(int(data.get('time')) // 1000).strftime("%H:%M:%S")
+                time = datetime.datetime.fromtimestamp(int(data.get('time')) // 1000).strftime("%S")
+                full_time = datetime.datetime.fromtimestamp(int(data.get('time')) // 1000).strftime("%d.%m.%Y %H:%M")
                 price = data.get('price')
 
                 if (time not in self.xdata) and (price not in self.ydata):
-                    #coin_second_data = (time, price)
-                    coin_second_data = (0, price)
-                    self.data.append(coin_second_data)
+                    coin_data = (float(time), float(price), full_time)
+                    self.data.append(coin_data)
                     self.xdata.append(time)
                     self.ydata.append(float(price))
 
-                self.json_load()
+                    if float(time) == 59.0:
+                        self.data.clear()
 
 
 def start(pair):
@@ -75,9 +67,3 @@ def start(pair):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(graphs())
     loop.run_forever()
-
-
-
-
-
-

@@ -3,7 +3,6 @@ import threading
 from kivy.app import App
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
-from kivy.uix.label import Label
 
 from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
@@ -29,9 +28,9 @@ class GRAPHlayout(GridLayout):
 
     def open_graph(self, coin):
 
-        Coin = Pair(name=coin.text)
-        coin_start = threading.Thread(target=start, args=(Coin,))
-        coin_start.start()
+        self.Coin = Pair(name=coin.text)
+        self.coin_start = threading.Thread(target=start, args=(self.Coin,))
+        self.coin_start.start()
 
         grapth = GRAPH(coin=coin.text)
         self.main_layout.clear_widgets()
@@ -40,11 +39,14 @@ class GRAPHlayout(GridLayout):
         self.GraphCoin = GridLayout(rows=1, cols=1)
         self.GraphCoin.add_widget(grapth.layout)
         self.scroll.add_widget(self.GraphCoin)
-
-        update_start = threading.Thread(target=grapth.update_graph)
+        update_start = threading.Thread(target=grapth.update_graph, args=(self.Coin.data, ))
         update_start.start()
 
         return self.scroll
+
+    def close_graph(self):
+        self.coin_start.ex
+
 
     def run(self):
         return self.scroll

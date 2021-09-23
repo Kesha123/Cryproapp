@@ -1,64 +1,44 @@
-import json
-from kivy.app import App
-
 from kivy.uix.gridlayout import GridLayout
 from kivy_garden.graph import Graph, MeshLinePlot
+from kivy.uix.label import Label
+from kivy.uix.button import Button
 import time
-
-
-def read_json_file(filename):
-    data = []
-    with open(filename, 'r') as f:
-        data = [json.loads(_.replace('}]}"},', '}]}"}')) for _ in f.readlines()]
-    return data
 
 
 class GRAPH(GridLayout):
     def __init__(self, coin, **kwargs):
         super().__init__(**kwargs)
         self.name = coin
-        self.graph = Graph(xlabel='Time', ylabel='Price', x_ticks_minor=2,
-                           x_ticks_major=8, y_ticks_major=8,
+        self.graph = Graph(xlabel='Time', ylabel='Price', x_ticks_minor=1,
+                           x_ticks_major=2, y_ticks_major=8,
                            y_grid_label=True, x_grid_label=True, padding=5,
-                           x_grid=True, y_grid=True, xmin=-0, xmax=100, ymin=0, ymax=100)
+                           x_grid=True, y_grid=True, xmin=0, xmax=59, ymin=0, ymax=100)
 
         self.plot = MeshLinePlot(color=[1, 0, 0, 1])
         self.plot.points = []
         self.graph.add_plot(self.plot)
 
-        self.layout = GridLayout(cols=1, rows=1)
+        self.info = Label(text='')
+
+        #self.BackButton = Button(text="Back", on_press=)
+
+        self.layout = GridLayout(cols=1, rows=3)
+        #self.layout.add_widget(self.BackButton)
+        self.layout.add_widget(self.info)
         self.layout.add_widget(self.graph)
 
-    def update_graph(self):
+    def update_graph(self, data):
         while True:
-            try:
-                data = read_json_file(f"{self.name}.json")
-                data = sorted(data, reverse=False)
+            if data:
                 self.graph.xmin = data[0][0]
-                self.graph.ymin = data[0][1]
-
-                self.graph.x_ticks_major = abs(data[0][0] - data[-1][0])
-                self.graph.y_ticks_major = abs(data[0][1] - data[-1][1])
+                self.graph.ymax = max(data, key=lambda x: x[1])[1] + 10
+                self.graph.ymin = min(data, key=lambda x: x[1])[1] - 10
 
                 self.plot.points = [(info[0], info[1]) for info in data]
                 self.graph.add_plot(self.plot)
-                print(self.plot.points)
-                time.sleep(5)
+                self.info.text = f"{data[0][-1]} \nlast price: {data[-1][1]}$"
 
-            except Exception as ex:
-                print(ex)
-                #self.update_graph()
-                #pass
-                break
+                time.sleep(1)
 
     def run(self):
         return self.layout
-
-
-class MyApp(App):
-    def build(self):
-        return GRAPH(coin='').run()
-
-
-if __name__ == '__main__':
-    MyApp().run()
