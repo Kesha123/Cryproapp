@@ -16,7 +16,8 @@ def create_user():
 def get_pairs():
     pairs = requests.get("https://api.kucoin.com/api/v1/symbols").json().get('data')
     for i in pairs:
-        yield i.get('symbol')
+        if i.get('symbol').split('-')[1] == "USDT":
+            yield i.get('symbol')
 
 
 class Pair:
@@ -57,7 +58,8 @@ class Pair:
                 price = data.get('price')
 
                 if (time not in self.xdata) and (price not in self.ydata):
-                    coin_second_data = (time, price)
+                    #coin_second_data = (time, price)
+                    coin_second_data = (0, price)
                     self.data.append(coin_second_data)
                     self.xdata.append(time)
                     self.ydata.append(float(price))

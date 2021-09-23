@@ -41,6 +41,9 @@ class GRAPHlayout(GridLayout):
         self.GraphCoin.add_widget(grapth.layout)
         self.scroll.add_widget(self.GraphCoin)
 
+        update_start = threading.Thread(target=grapth.update_graph)
+        update_start.start()
+
         return self.scroll
 
     def run(self):
