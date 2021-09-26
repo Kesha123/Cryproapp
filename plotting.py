@@ -33,7 +33,11 @@ class GRAPH(GridLayout):
             if data:
                 self.graph.xmin = data[0][0]
                 self.graph.ymax = max(data, key=lambda x: x[1])[1] + 10
-                self.graph.ymin = min(data, key=lambda x: x[1])[1] - 10
+
+                if min(data, key=lambda x: x[1])[1] - 10 >= 0:
+                    self.graph.ymin = min(data, key=lambda x: x[1])[1] - 10
+                else:
+                    self.graph.ymin = 0
 
                 self.plot.points = [(info[0], info[1]) for info in data]
                 self.graph.add_plot(self.plot)

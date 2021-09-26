@@ -1,14 +1,14 @@
 import threading
+from screeninfo import get_monitors
 
 from kivy.app import App
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
-
 from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
+
 from plotting import GRAPH
-from Pairs import get_pairs
-from Pairs import Pair, start
+from Pairs import Pair, start, get_pairs
 
 
 class StopableThread(threading.Thread):
@@ -76,7 +76,13 @@ class GRAPHlayout(GridLayout):
 
 
 class MyApp(App):
+    @staticmethod
+    def screen_size():
+        return get_monitors()[0].width, get_monitors()[0].height
+
     def build(self):
+        Window.size = (self.screen_size()[0], self.screen_size()[1])
+
         return GRAPHlayout().run()
 
 
