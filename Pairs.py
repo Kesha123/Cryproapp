@@ -3,6 +3,10 @@ import json
 import websockets
 import requests
 import datetime
+import certifi
+import os
+
+os.environ['SSL_CERT_FILE'] = certifi.where()
 
 
 def create_user():
