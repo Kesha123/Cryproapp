@@ -1,11 +1,12 @@
 import threading
-from screeninfo import get_monitors
 
 from kivy.app import App
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.button import Button
 from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
+
+from screeninfo import get_monitors
 
 from plotting import GRAPH
 from Pairs import Pair, start, get_pairs
@@ -40,7 +41,6 @@ class GRAPHlayout(GridLayout):
         self.scroll.add_widget(self.main_layout)
 
     def open_graph(self, coin):
-
         self.Coin = Pair(name=coin.text)
         self.coin_start = StopableThread(target=start, args=(self.Coin,))
         self.coin_start.start()

@@ -6,15 +6,17 @@ import datetime
 
 
 def create_user():
-    url = requests.post('https://api.kucoin.com/api/v1/bullet-public').json()
+    url = requests.post('https://api.kucoin.com/api/v1/bullet-public', verify=False).json()
     token = url.get('data').get('token')
     endpoint = url.get('data').get('instanceServers')[0].get('endpoint')
     socket = "{}?token={}&connectId=12345".format(endpoint, token)
-    return socket
+    ping_interval = url.get('data').get('instanceServers')[0].get('pingInterval')
+    ping_timeout = url.get('data').get('instanceServers')[0].get('pingTimeout')
+    return socket, ping_interval, ping_timeout
 
 
 def get_pairs():
-    pairs = requests.get("https://api.kucoin.com/api/v1/symbols").json().get('data')
+    pairs = requests.get("https://api.kucoin.com/api/v1/symbols", verify=False).json().get('data')
     for i in pairs:
         if i.get('symbol').split('-')[1] == "USDT":
             yield i.get('symbol')
@@ -29,7 +31,7 @@ class Pair:
         self.full_time = ''
 
     async def main(self, websocket=create_user()):
-        async with websockets.connect(websocket, ping_interval=None) as connection:
+        async with websockets.connect(websocket[0], ping_interval=websocket[1], ping_timeout=websocket[2]) as connection:
             data = json.dumps({
                 "id": "12345",
                 "type": "subscribe",
