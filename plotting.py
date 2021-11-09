@@ -1,29 +1,31 @@
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.relativelayout import RelativeLayout
 from kivy_garden.graph import Graph, MeshLinePlot
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 import time
 
 
-class GRAPH(GridLayout):
+class GRAPH(RelativeLayout):
     def __init__(self, coin, **kwargs):
         super().__init__(**kwargs)
+        self.stop = False
         self.name = coin
         self.graph = Graph(xlabel='Time', ylabel='Price', x_ticks_minor=1,
                            x_ticks_major=2, y_ticks_major=8,
                            y_grid_label=True, x_grid_label=True, padding=5,
-                           x_grid=True, y_grid=True, xmin=0, xmax=59, ymin=0, ymax=100)
+                           x_grid=True, y_grid=True, xmin=0, xmax=59, ymin=0, ymax=100,
+                           size_hint=(1, .9))
 
         self.plot = MeshLinePlot(color=[1, 0, 0, 1])
         self.plot.points = []
         self.graph.add_plot(self.plot)
 
-        self.info = Label(text='')
+        self.info = Label(text='', size_hint=(.9, .1), pos_hint={"right": 1, "top": 1}, markup=True)
 
-        self.BackButton = Button(text="Back", on_press=lambda x: self.stop_plotting(key='btn'))
-        self.stop = False
+        self.BackButton = Button(text="Back", size_hint=(.1, .1), pos_hint={"left": 1, "top": 1}, on_press=lambda x: self.stop_plotting(key='btn'))
 
-        self.layout = GridLayout(cols=1, rows=3)
+        self.layout = RelativeLayout()
         self.layout.add_widget(self.BackButton)
         self.layout.add_widget(self.info)
         self.layout.add_widget(self.graph)
@@ -34,14 +36,16 @@ class GRAPH(GridLayout):
                 self.graph.xmin = data[0][0]
                 self.graph.ymax = max(data, key=lambda x: x[1])[1] + 10
 
-                if min(data, key=lambda x: x[1])[1] - 10 >= 0:
+                if min(data, key=lambda x: x[1])[1] - 10 >= 1:
                     self.graph.ymin = min(data, key=lambda x: x[1])[1] - 10
-                else:
-                    self.graph.ymin = 0
+
+                elif 1 >= min(data, key=lambda x: x[1])[1] >= 0:
+                    self.graph.ymax = min(data, key=lambda x: x[1])[1]*1.5
+                    self.graph.ymin = min(data, key=lambda x: x[1])[1]*0.9
 
                 self.plot.points = [(info[0], info[1]) for info in data]
                 self.graph.add_plot(self.plot)
-                self.info.text = f"{data[0][-1]} \nlast price: {data[-1][1]}$"
+                self.info.text = f"[b]{data[0][3]}[/b]                                     {data[0][2]}:{data[-1][0]}                                     last price: [b]{data[-1][1]}$[/b]"
 
                 time.sleep(1)
 
@@ -51,3 +55,6 @@ class GRAPH(GridLayout):
 
     def run(self):
         return self.layout
+
+    def __del__(self):
+        print("Stop plotting")

@@ -56,13 +56,17 @@ class Pair:
                 price = data.get('price')
 
                 if (time not in self.xdata) and (price not in self.ydata):
-                    coin_data = (float(time), float(price), full_time)
+                    coin_data = (float(time), float(price), full_time, self.name,)
                     self.data.append(coin_data)
                     self.xdata.append(time)
                     self.ydata.append(float(price))
 
                     if float(time) == 59.0:
                         self.data.clear()
+
+    def __del__(self):
+        raise ValueError
+        print("Pair is deleted")
 
 
 def start(pair):

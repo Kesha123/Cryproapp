@@ -35,7 +35,7 @@ class GRAPHlayout(GridLayout):
             CoinButton = Button(text=f"{btn}", size_hint_y=None, height=40, on_press=lambda btn: self.open_graph(btn))
             self.main_layout.add_widget(CoinButton)
 
-        self.scroll = ScrollView(size_hint=(1, None), size=(Window.width, Window.height))
+        self.scroll = ScrollView(size_hint=(1, 1), size=(Window.width, Window.height))
         self.scroll.add_widget(self.main_layout)
 
     def open_graph(self, coin):
@@ -63,9 +63,16 @@ class GRAPHlayout(GridLayout):
     def close_graph(self):
         while True:
             if self.graph.stop:
+
                 self.coin_start.stop()
                 self.update_start.stop()
                 self.is_stopped.stop()
+
+                del self.Coin
+                del self.graph
+                del self.coin_start
+                del self.update_start
+                del self.is_stopped
 
                 self.scroll.clear_widgets()
                 self.scroll.add_widget(self.main_layout)
