@@ -45,7 +45,7 @@ class GRAPH(RelativeLayout):
 
                 self.plot.points = [(info[0], info[1]) for info in data]
                 self.graph.add_plot(self.plot)
-                self.info.text = f"[b]{data[0][3]}[/b]                                     {data[0][2]}:{data[-1][0]}                                     last price: [b]{data[-1][1]}$[/b]"
+                self.info.text = f"[b]{data[0][3]}[/b]  {data[0][2]}:{data[-1][0]}  last price: [b]{data[-1][1]}$[/b]"
 
                 time.sleep(1)
 
