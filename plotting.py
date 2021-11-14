@@ -1,4 +1,3 @@
-from kivy.uix.gridlayout import GridLayout
 from kivy.uix.relativelayout import RelativeLayout
 from kivy_garden.graph import Graph, MeshLinePlot
 from kivy.uix.label import Label

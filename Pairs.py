@@ -35,7 +35,8 @@ class Pair:
         self.full_time = ''
 
     async def main(self, websocket=create_user()):
-        async with websockets.connect(websocket[0], ping_interval=websocket[1], ping_timeout=websocket[2]) as connection:
+        async with websockets.connect(websocket[0], ping_interval=websocket[1],
+                                      ping_timeout=websocket[2]) as connection:
             data = json.dumps({
                 "id": "12345",
                 "type": "subscribe",
@@ -65,7 +66,6 @@ class Pair:
                         self.data.clear()
 
     def __del__(self):
-        raise ValueError
         print("Pair is deleted")
 
 
@@ -77,3 +77,7 @@ def start(pair):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(graphs())
     loop.run_forever()
+
+
+if __name__ == '__main__':
+    pass
