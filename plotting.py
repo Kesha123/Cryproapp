@@ -1,16 +1,16 @@
 from kivy.uix.relativelayout import RelativeLayout
-from kivy_garden.graph import Graph, MeshLinePlot
+from kivy_garden.graph import Graph as GRAPH, MeshLinePlot
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 import time
 
 
-class GRAPH(RelativeLayout):
+class Graph(RelativeLayout):
     def __init__(self, coin, **kwargs):
         super().__init__(**kwargs)
         self.stop = False
         self.name = coin
-        self.graph = Graph(xlabel='Time', ylabel='Price', x_ticks_minor=1,
+        self.graph = GRAPH(xlabel='Time', ylabel='Price', x_ticks_minor=1,
                            x_ticks_major=2, y_ticks_major=8,
                            y_grid_label=True, x_grid_label=True, padding=5,
                            x_grid=True, y_grid=True, xmin=0, xmax=59, ymin=0, ymax=100,
