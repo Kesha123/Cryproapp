@@ -26,7 +26,7 @@ def get_pairs():
             yield i.get('symbol')
 
 
-class Pair:
+class Pair(object):
     def __init__(self, name):
         self.name = name
         self.data = []
@@ -64,6 +64,9 @@ class Pair:
 
                     if float(time) == 59.0:
                         self.data.clear()
+
+    def __delete__(self, instance):
+        print("Pair is deleted")
 
     def __del__(self):
         print("Pair is deleted")

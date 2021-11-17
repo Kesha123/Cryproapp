@@ -10,11 +10,8 @@ from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
 from kivy.uix.label import Label
 
-from kivy.event import *
-from functools import partial
-
 from plotting import Graph
-from Pairs import Pair, start, get_pairs
+import gc
 
 
 class CoinApp(App):
@@ -32,12 +29,24 @@ class StopableThread(threading.Thread):
     def __init__(self, *args, **kwargs):
         super(StopableThread, self).__init__(*args, **kwargs)
         self._stop = threading.Event()
+        self._delete = threading.Event
 
     def stop(self):
+        print(f"{self.name} is stopped")
         self._stop.set()
+
+    def delete(self):
+        print(f"{self.name} is deleted")
+        self._delete.set()
 
     def stopped(self):
         return self._stop.isSet()
+
+    def __del__(self):
+        print(f"Thread is deleted || {self.name}")
+
+    def __delete__(self, instance):
+        print(f"Thread is deleted || {self.name}")
 
 
 class ConnectionErrorWindow(RelativeLayout):
@@ -50,42 +59,63 @@ class ConnectionErrorWindow(RelativeLayout):
         self.internet_layout.add_widget(self.error_label)
         self.internet_layout.add_widget(self.reload_button)
 
-    @staticmethod
-    def reload():
-        main()
+    def __del__(self):
+        print("Delete internet window")
+
+    def reload(self):
+        if check_internet_connection():
+            self.internet_layout.clear_widgets()
+            application.run()
+        else:
+            return self
+
+
+def check_internet_connection():
+    try:
+        from Pairs import get_pairs
+    except:
+        return False
+    else:
+        return True
 
 
 class MainWindow(RelativeLayout):
-    def __init__(self, **kwargs):
+    def __init__(self, internet, **kwargs):
         super().__init__(**kwargs)
 
         self.main_layout = RelativeLayout()
-        self.main_layout.clear_widgets()
 
-        self.button_size = Window.height*0.9//3
-        self.CoinList = [i for i in get_pairs()][0:10]
+        if internet:
+            from Pairs import get_pairs
 
-        self.button_layout = GridLayout(cols=1, spacing=0, size_hint_y=None)
-        self.button_layout.bind(minimum_height=self.button_layout.setter('height'))
+            self.button_size = Window.height*0.9//3
+            self.CoinList = [i for i in get_pairs()][0:10]
 
-        for btn in self.CoinList:
-            CoinButton = Button(text=f"{btn}", size_hint_y=None, height=self.button_size,
-                                on_press=lambda btn: application.app.open_graph(btn))
-            self.button_layout.add_widget(CoinButton)
+            self.button_layout = GridLayout(cols=1, spacing=0, size_hint_y=None)
+            self.button_layout.bind(minimum_height=self.button_layout.setter('height'))
 
-        self.scroll = ScrollView(size_hint=(1, .9), size=(Window.width, Window.height))
-        self.scroll.add_widget(self.button_layout)
+            for btn in self.CoinList:
+                CoinButton = Button(text=f"{btn}", size_hint_y=None, height=self.button_size,
+                                    on_press=lambda btn: application.app.open_graph(btn))
+                self.button_layout.add_widget(CoinButton)
 
-        self.search_layout = RelativeLayout()
-        self.search_label = TextInput(multiline=False, size_hint=(.8, .1), pos_hint={"left": 1, "top": 1})
-        self.search_button = Button(text="Search", size_hint=(.1, .1), pos_hint={"right": .9, "top": 1}, on_press=lambda name: self.search(self.search_label.text))
-        self.reset_button = Button(text="Reset", size_hint=(.1, .1), pos_hint={"right": 1, "top": 1}, on_press=lambda key: self.reset())
-        self.search_layout.add_widget(self.search_label)
-        self.search_layout.add_widget(self.search_button)
-        self.search_layout.add_widget(self.reset_button)
+            self.scroll = ScrollView(size_hint=(1, .9), size=(Window.width, Window.height))
+            self.scroll.add_widget(self.button_layout)
 
-        self.main_layout.add_widget(self.scroll)
-        self.main_layout.add_widget(self.search_layout)
+            self.search_layout = RelativeLayout()
+            self.search_label = TextInput(multiline=False, size_hint=(.8, .1), pos_hint={"left": 1, "top": 1})
+            self.search_button = Button(text="Search", size_hint=(.1, .1), pos_hint={"right": .9, "top": 1}, on_press=lambda name: self.search(self.search_label.text))
+            self.reset_button = Button(text="Reset", size_hint=(.1, .1), pos_hint={"right": 1, "top": 1}, on_press=lambda key: self.reset())
+            self.search_layout.add_widget(self.search_label)
+            self.search_layout.add_widget(self.search_button)
+            self.search_layout.add_widget(self.reset_button)
+
+            self.main_layout.add_widget(self.scroll)
+            self.main_layout.add_widget(self.search_layout)
+
+        else:
+            self.connection_window = ConnectionErrorWindow().internet_layout
+            self.main_layout.add_widget(self.connection_window)
 
     def search(self, name):
         self.button_layout.clear_widgets()
@@ -93,7 +123,7 @@ class MainWindow(RelativeLayout):
         self.main_layout.clear_widgets()
 
         for btn in self.CoinList:
-            if SequenceMatcher(None, btn.lower(), name.lower()).ratio() >= 0.3:
+            if SequenceMatcher(None, btn.lower(), name.lower()).ratio() >= 0.6:
                 CoinButton = Button(text=f"{btn}", size_hint_y=None, height=self.button_size,
                                     on_press=lambda btn: application.app.open_graph(btn))
                 self.button_layout.add_widget(CoinButton)
@@ -129,27 +159,29 @@ class Build(RelativeLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        self.internet = check_internet_connection()
+
         self.main_layout = RelativeLayout()
-        self.main_window = MainWindow()
-        self.connection_window = ConnectionErrorWindow().internet_layout
+        self.main_window = MainWindow(internet=self.internet)
         self.main_layout.add_widget(self.main_window.main_layout)
 
     def open_graph(self, coin):
+        from Pairs import Pair, start
+
         self.main_layout.clear_widgets()
-        print(coin.text)
 
         self.coin = Pair(name=coin.text)
-        self.coin_start = StopableThread(target=start, args=(self.coin,))
+        self.coin_start = StopableThread(target=start, args=(self.coin,), name="Collecting information thread")
         self.coin_start.start()
 
         self.graph = Graph(coin=coin)
         self.main_layout.clear_widgets()
         self.main_layout.add_widget(self.graph.layout)
 
-        self.update_start = StopableThread(target=self.graph.update_graph, args=(self.coin.data,))
+        self.update_start = StopableThread(target=self.graph.update_graph, args=(self.coin.data,), name="Plotting thread")
         self.update_start.start()
 
-        self.is_stopped = StopableThread(target=self.close_graph)
+        self.is_stopped = StopableThread(target=self.close_graph, name="Stop thread")
         self.is_stopped.start()
 
         return self.main_layout
@@ -157,6 +189,8 @@ class Build(RelativeLayout):
     def close_graph(self):
         while True:
             if self.graph.stop:
+
+                self.main_layout.clear_widgets()
                 self.coin_start.stop()
                 self.update_start.stop()
                 self.is_stopped.stop()
@@ -167,7 +201,6 @@ class Build(RelativeLayout):
                 del self.update_start
                 del self.is_stopped
 
-                self.main_layout.clear_widgets()
                 self.main_layout.add_widget(self.main_window.main_layout)
                 return self.main_layout
 

@@ -55,5 +55,8 @@ class Graph(RelativeLayout):
     def run(self):
         return self.layout
 
+    def __delete__(self, instance):
+        print("Delete plotting")
+
     def __del__(self):
-        print("Stop plotting")
+        print("Delete plotting")
