@@ -7,13 +7,14 @@ import certifi
 import os
 
 os.environ['SSL_CERT_FILE'] = certifi.where()
+connectionID = 12345
 
 
 def create_user():
     url = requests.post('https://api.kucoin.com/api/v1/bullet-public', verify=False).json()
     token = url.get('data').get('token')
     endpoint = url.get('data').get('instanceServers')[0].get('endpoint')
-    socket = "{}?token={}&connectId=12345".format(endpoint, token)
+    socket = "{}?token={}&connectId={}".format(endpoint, token, connectionID)
     ping_interval = url.get('data').get('instanceServers')[0].get('pingInterval')
     ping_timeout = url.get('data').get('instanceServers')[0].get('pingTimeout')
     return socket, ping_interval, ping_timeout
@@ -27,7 +28,7 @@ def get_pairs():
 
 
 class Pair(object):
-    def __init__(self, name):
+    def __init__(self, name=''):
         self.name = name
         self.data = []
         self.xdata = []
@@ -37,8 +38,9 @@ class Pair(object):
     async def main(self, websocket=create_user()):
         async with websockets.connect(websocket[0], ping_interval=websocket[1],
                                       ping_timeout=websocket[2]) as connection:
+
             data = json.dumps({
-                "id": "12345",
+                "id": f"{connectionID}",
                 "type": "subscribe",
                 "topic": f"/market/ticker:{self.name}",
                 "privateChannel": "false",
@@ -66,9 +68,6 @@ class Pair(object):
                         self.data.clear()
 
     def __delete__(self, instance):
-        print("Pair is deleted")
-
-    def __del__(self):
         print("Pair is deleted")
 
 

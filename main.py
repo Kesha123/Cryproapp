@@ -11,7 +11,7 @@ from kivy.core.window import Window
 from kivy.uix.label import Label
 
 from plotting import Graph
-import gc
+from memory_profiler import profile
 
 
 class CoinApp(App):
@@ -46,7 +46,7 @@ class StopableThread(threading.Thread):
         print(f"Thread is deleted || {self.name}")
 
     def __delete__(self, instance):
-        print(f"Thread is deleted || {self.name}")
+        print(f"Thread is deleted || {self.name}++")
 
 
 class ConnectionErrorWindow(RelativeLayout):
@@ -89,7 +89,7 @@ class MainWindow(RelativeLayout):
             from Pairs import get_pairs
 
             self.button_size = Window.height*0.9//3
-            self.CoinList = [i for i in get_pairs()][0:10]
+            self.CoinList = [i for i in get_pairs()]
 
             self.button_layout = GridLayout(cols=1, spacing=0, size_hint_y=None)
             self.button_layout.bind(minimum_height=self.button_layout.setter('height'))
@@ -155,7 +155,7 @@ class MainWindow(RelativeLayout):
         self.main_layout.add_widget(self.search_layout)
 
 
-class Build(RelativeLayout):
+class Build(RelativeLayout, object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -165,18 +165,16 @@ class Build(RelativeLayout):
         self.main_window = MainWindow(internet=self.internet)
         self.main_layout.add_widget(self.main_window.main_layout)
 
-    def open_graph(self, coin):
-        from Pairs import Pair, start
-
+    @profile
+    def open_graph(self, name):
+        from Pairs import start, Pair
         self.main_layout.clear_widgets()
 
-        self.coin = Pair(name=coin.text)
+        self.coin = Pair(name=name.text)
+        self.graph = Graph(coin=name)
+
         self.coin_start = StopableThread(target=start, args=(self.coin,), name="Collecting information thread")
         self.coin_start.start()
-
-        self.graph = Graph(coin=coin)
-        self.main_layout.clear_widgets()
-        self.main_layout.add_widget(self.graph.layout)
 
         self.update_start = StopableThread(target=self.graph.update_graph, args=(self.coin.data,), name="Plotting thread")
         self.update_start.start()
@@ -184,22 +182,25 @@ class Build(RelativeLayout):
         self.is_stopped = StopableThread(target=self.close_graph, name="Stop thread")
         self.is_stopped.start()
 
+        self.main_layout.add_widget(self.graph.layout)
+
         return self.main_layout
 
+    @profile
     def close_graph(self):
         while True:
             if self.graph.stop:
-
                 self.main_layout.clear_widgets()
                 self.coin_start.stop()
                 self.update_start.stop()
                 self.is_stopped.stop()
 
-                del self.coin
-                del self.graph
-                del self.coin_start
-                del self.update_start
-                del self.is_stopped
+                self.coin.__delete__(self.coin)
+                self.graph.__delete__(self.graph)
+
+                self.coin_start.__delete__(self.coin_start)
+                self.update_start.__delete__(self.update_start)
+                self.is_stopped.__delete__(self.is_stopped)
 
                 self.main_layout.add_widget(self.main_window.main_layout)
                 return self.main_layout

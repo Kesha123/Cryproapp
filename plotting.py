@@ -6,10 +6,10 @@ import time
 
 
 class Graph(RelativeLayout):
-    def __init__(self, coin, **kwargs):
+    def __init__(self, coin='', **kwargs):
         super().__init__(**kwargs)
         self.stop = False
-        self.name = coin
+        self.coin = coin
         self.graph = GRAPH(xlabel='Time', ylabel='Price', x_ticks_minor=1,
                            x_ticks_major=2, y_ticks_major=8,
                            y_grid_label=True, x_grid_label=True, padding=5,
@@ -56,7 +56,4 @@ class Graph(RelativeLayout):
         return self.layout
 
     def __delete__(self, instance):
-        print("Delete plotting")
-
-    def __del__(self):
         print("Delete plotting")
