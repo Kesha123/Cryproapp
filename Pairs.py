@@ -5,10 +5,8 @@ import requests
 import datetime
 import certifi
 import os
-#import nest_asyncio
 import time as Time
 
-#nest_asyncio.apply()
 
 os.environ['SSL_CERT_FILE'] = certifi.where()
 connectionID = 12345
@@ -21,7 +19,6 @@ def create_user():
     socket = "{}?token={}&connectId={}".format(endpoint, token, connectionID)
     ping_interval = url.get('data').get('instanceServers')[0].get('pingInterval')
     ping_timeout = url.get('data').get('instanceServers')[0].get('pingTimeout')
-    print(ping_interval, ping_timeout)
     return socket, ping_interval, ping_timeout
 
 
@@ -39,13 +36,14 @@ class Pair(object):
         self.xdata = []
         self.ydata = []
         self.timer = 0
+        self.unsubscribe = False
 
     async def main(self, websocket=create_user()):
         async with websockets.connect(websocket[0], ping_interval=websocket[1],
                                       ping_timeout=websocket[2]) as connection:
 
-            pingInterval = websocket[1]//1000
-            pingTimeout = websocket[2]//1000
+            pingInterval = websocket[1] // 1000
+            pingTimeout = websocket[2] // 1000
 
             data = json.dumps({
                 "id": f"{connectionID}",
@@ -66,7 +64,8 @@ class Pair(object):
                     data = response.get('data')
 
                     time = datetime.datetime.fromtimestamp(int(data.get('time')) // 1000).strftime("%S")
-                    full_time = datetime.datetime.fromtimestamp(int(data.get('time')) // 1000).strftime("%d.%m.%Y %H:%M")
+                    full_time = datetime.datetime.fromtimestamp(int(data.get('time')) // 1000).strftime(
+                        "%d.%m.%Y %H:%M")
                     price = data.get('price')
 
                     if (time not in self.xdata) and (price not in self.ydata):
@@ -93,11 +92,23 @@ class Pair(object):
                         self.timer *= 0
 
                 except Exception as ex:
-                    print(ex)
+                    pass
 
-                print(self.ydata)
+                if self.unsubscribe:
+                    unsubscribe = json.dumps(
+                        {
+                            "id": "1545910840805",
+                            "type": "unsubscribe",
+                            "topic": f"/market/ticker:{self.name}",
+                            "privateChannel": "false",
+                            "response": "false"
+                        })
+
+                    await connection.send(unsubscribe)
+                    break
 
     def __delete__(self, instance):
+        del self
         print("Pair is deleted")
 
 
@@ -112,6 +123,4 @@ def start(pair):
 
 
 if __name__ == '__main__':
-    #p = Pair("BTC-USDT")
-    #start(p)
     pass

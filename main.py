@@ -42,9 +42,6 @@ class StopableThread(threading.Thread):
     def stopped(self):
         return self._stop.isSet()
 
-    def __del__(self):
-        print(f"Thread is deleted || {self.name}")
-
     def __delete__(self, instance):
         print(f"Thread is deleted || {self.name}++")
 
@@ -191,16 +188,21 @@ class Build(RelativeLayout, object):
         while True:
             if self.graph.stop:
                 self.main_layout.clear_widgets()
+                self.coin.unsubscribe = True
+
                 self.coin_start.stop()
                 self.update_start.stop()
                 self.is_stopped.stop()
-
+                print("\n")
                 self.coin.__delete__(self.coin)
                 self.graph.__delete__(self.graph)
-
+                print("\n")
                 self.coin_start.__delete__(self.coin_start)
                 self.update_start.__delete__(self.update_start)
                 self.is_stopped.__delete__(self.is_stopped)
+                print("\n")
+                print(self.coin)
+                print(self.graph)
 
                 self.main_layout.add_widget(self.main_window.main_layout)
                 return self.main_layout
